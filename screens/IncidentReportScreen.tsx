@@ -9,7 +9,7 @@ export default function IncidentReportScreen() {
   const [severity, setSeverity] = useState('medium');
   const [outcome, setOutcome] = useState('');
   const [loading, setLoading] = useState(false);
-   const [staffUser, setStaffUser] = useState<any>(null);
+  const [staffUser, setStaffUser] = useState<any>(null);
 
   async function handleSubmit() {
     if (!caseId || !description) {
@@ -17,7 +17,7 @@ export default function IncidentReportScreen() {
     }
     const userData = await AsyncStorage.getItem('staffUser');
     let staffId;
-    
+
     if (userData) {
       const parsedUser = JSON.parse(userData);
       setStaffUser(parsedUser);
@@ -29,14 +29,14 @@ export default function IncidentReportScreen() {
       console.log('Missing token or staff ID');
       return;
     }
-    
+
     console.log('Staff Token:', staffToken);
-    console.log('Staff ID:', staffId); 
+    console.log('Staff ID:', staffId);
 
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('staffToken');
-      const res = await fetch('https://sos.macroit.org/api/incident-reports', {
+      const res = await fetch(`${process.env.API_URL}/incident-reports`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -51,7 +51,7 @@ export default function IncidentReportScreen() {
         }),
       });
 
-      if (!res.ok) throw new Error('Failed to submit report '+res.status);
+      if (!res.ok) throw new Error('Failed to submit report ' + res.status);
 
       toast.success('Report submitted successfully');
       setCaseId('');

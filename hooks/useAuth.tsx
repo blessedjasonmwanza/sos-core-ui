@@ -12,7 +12,7 @@ interface AuthContextValue {
   loading: boolean;
   loginUser: (phone: string) => Promise<void>;
   logout: () => Promise<void>;
-  registerStaff: (payload: Omit<StaffRecord, 'id' | 'submittedAt' | 'approved'>) => Promise<string>;
+  registerStaff: (payload: Omit<StaffRecord, 'id' | 'submittedAt' | 'approved'>) => Promise<any>;
   submitStaffSignature: (staffId: string, signatureUri: string) => Promise<void>;
   loginStaff: (phone: string, password: string) => Promise<void>;
 }
@@ -24,13 +24,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    
+
   }, []);
 
   async function loginUser(phone: string) {
     setLoading(true);
     try {
-     
+
       setUser({ role: 'user', phone });
     } finally {
       setLoading(false);
@@ -44,8 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function registerStaff(payload: Omit<StaffRecord, 'id' | 'submittedAt' | 'approved'>) {
     setLoading(true);
     try {
-      const staffId = await DB.createStaff({ ...payload, submittedAt: Date.now(), approved: false });
-      return staffId;
+      const result = await DB.createStaff(payload);
+      return result;
     } finally {
       setLoading(false);
     }

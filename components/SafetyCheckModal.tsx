@@ -77,7 +77,7 @@ export default function SafetyCheckModal({
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    
+
     // Auto-select thumbs down and trigger emergency
     setResponding(true);
     await triggerEmergencyHelp();
@@ -114,7 +114,7 @@ export default function SafetyCheckModal({
         timestamp: new Date().toISOString(),
       };
 
-      const response = await fetch('https://sos.macroit.org/api/emergency-help', {
+      const response = await fetch(`${process.env.API_URL}/emergency-help`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -166,10 +166,10 @@ export default function SafetyCheckModal({
       clearTimeout(timeoutRef.current);
     }
     setResponding(true);
-    
+
     // Trigger emergency help
     await triggerEmergencyHelp();
-    
+
     onThumbsDown();
     // Close modal after a brief delay
     setTimeout(() => {

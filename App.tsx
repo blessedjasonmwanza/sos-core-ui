@@ -36,7 +36,7 @@ const Stack = createNativeStackNavigator();
 // TODO: Replace this with your real backend URL or wire via environment variables.
 const API_BASE_URL = 'https://api.yourdomain.com';
 
-export default function App(): JSX.Element {
+export default function App() {
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
@@ -121,6 +121,7 @@ export default function App(): JSX.Element {
         <AuthProvider>
           <NavigationContainer>
             <Stack.Navigator
+              id={undefined}
               initialRouteName="Welcome"
               screenOptions={{ headerShown: false }}
             >
@@ -137,15 +138,15 @@ export default function App(): JSX.Element {
               <Stack.Screen name="StaffTerms" component={StaffTermsScreen} />
               <Stack.Screen name="StaffSignature" component={StaffSignatureScreen} />
               <Stack.Screen name="StaffPending" component={StaffPendingScreen} />
- <Stack.Screen 
-    name="StaffLogin" 
-    component={StaffLoginScreen}
-    options={{ 
-      headerShown: true,
-      title: 'Home',
-      headerBackTitle: 'Back' // For iOS
-    }}
-  />
+              <Stack.Screen
+                name="StaffLogin"
+                component={StaffLoginScreen}
+                options={{
+                  headerShown: true,
+                  title: 'Home',
+                  headerBackTitle: 'Back' // For iOS
+                }}
+              />
               <Stack.Screen name="StaffDashboard" component={StaffDashboardScreen} />
               <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
               <Stack.Screen name="StaffProfile" component={StaffProfileScreen} />
@@ -153,7 +154,7 @@ export default function App(): JSX.Element {
               <Stack.Screen name="IncidentReports" component={IncidentReportScreen} />
               <Stack.Screen name="SOSAlerts" component={SOSAlertsScreen} />
               <Stack.Screen name="Resources" component={ResourcesScreen} />
-              
+
 
 
 

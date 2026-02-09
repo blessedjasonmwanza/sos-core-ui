@@ -20,7 +20,7 @@ export default function StaffLoginScreen() {
 
     try {
       // 1. Login
-      const res = await fetch('https://sos.macroit.org/api/staff-login', {
+      const res = await fetch(`${process.env.API_URL}/staff-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -71,7 +71,7 @@ export default function StaffLoginScreen() {
       formData.append('latitude', latitude.toString());
       formData.append('longitude', longitude.toString());
 
-      await fetch('https://sos.macroit.org/api/update-location', {
+      await fetch(`${process.env.API_URL}/update-location`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

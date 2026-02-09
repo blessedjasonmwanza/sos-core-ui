@@ -40,7 +40,7 @@ export default function UserMapScreen() {
       if (prefsString) {
         const prefs: TrackingPreferences = JSON.parse(prefsString);
         setTrackingPreferences(prefs);
-        
+
         // Start check-in timer if tracking is enabled
         if (prefs.trackingEnabled && prefs.checkInIntervalMinutes) {
           startCheckInTimer(prefs.checkInIntervalMinutes);
@@ -59,7 +59,7 @@ export default function UserMapScreen() {
     }
 
     const intervalMs = intervalMinutes * 60 * 1000; // Convert minutes to milliseconds
-    
+
     checkInTimerRef.current = setTimeout(() => {
       setSafetyModalVisible(true);
       // Timer will be restarted after user responds to the modal
@@ -214,7 +214,7 @@ export default function UserMapScreen() {
       };
 
       // Call Laravel backend API
-      const response = await fetch('https://sos.macroit.org/api/emergency-help', {
+      const response = await fetch(`${process.env.API_URL}/emergency-help`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

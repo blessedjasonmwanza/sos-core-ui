@@ -38,7 +38,7 @@ export async function generateOtp(phone: string) {
     const formData = new FormData();
     formData.append('phone_number', phone);
 
-    const response = await fetch(`https://sos.macroit.org/api/signup`, {
+    const response = await fetch(`${process.env.API_URL}/signup`, {
       method: 'POST',
       body: formData,
     });
@@ -70,7 +70,7 @@ export async function verifyOtp(phone: string, code: string, token: string) {
   formData.append('phone_number', phone || '');
 
   try {
-    const response = await fetch(`https://sos.macroit.org/api/verifyOtp`, {
+    const response = await fetch(`${process.env.API_URL}/verifyOtp`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -120,7 +120,7 @@ export async function createStaff(payload: {
     formData.append('nrc', payload.nrc);
     formData.append('selfie', payload.selfie);
 
-    const response = await fetch(`https://sos.macroit.org/api/createMedicalStaff`, {
+    const response = await fetch(`${process.env.API_URL}/createMedicalStaff`, {
       method: 'POST',
       body: formData,
     });
@@ -151,9 +151,9 @@ export async function submitStaffSignature(payload: {
   try {
     const formData = new FormData();
     formData.append('phone', payload.phone);
-    formData.append('signature', payload.signature); 
+    formData.append('signature', payload.signature);
 
-    const response = await fetch(`https://sos.macroit.org/api/signature`, {
+    const response = await fetch(`${process.env.API_URL}/signature`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${payload.token}`,
@@ -183,12 +183,12 @@ export async function submitStaffSignature(payload: {
 
 export async function listActiveStaffs(token) {
   try {
-   
-    const res = await fetch(`https://sos.macroit.org/api/active-staffs`, {
+
+    const res = await fetch(`${process.env.API_URL}/active-staffs`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'Authorization': `Bearer ${token}`, 
+        'Authorization': `Bearer ${token}`,
       },
     });
 
@@ -198,7 +198,7 @@ export async function listActiveStaffs(token) {
       throw new Error(data.message || 'Failed to fetch staff');
     }
 
-    return data.staffs; 
+    return data.staffs;
   } catch (err: any) {
     console.error('listActiveStaffs error:', err);
     throw err;
@@ -250,8 +250,8 @@ export async function createSOS(sos: Omit<SOSRecord, 'id'>) {
 
 export async function listSOS(staffId) {
   try {
-  const staffToken = await AsyncStorage.getItem('staffToken'); 
-    const response = await fetch(`https://sos.macroit.org/api/emergency_statuses/${staffId}`, {
+    const staffToken = await AsyncStorage.getItem('staffToken');
+    const response = await fetch(`${process.env.API_URL}/emergency_statuses/${staffId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${staffToken}`,
@@ -266,7 +266,7 @@ export async function listSOS(staffId) {
       throw new Error(data.message || 'Failed to fetch SOS records');
     }
 
-    
+
     const sosList = data.emergencies || data.data || data;
     console.log('listSOS :', sosList);
     return sosList;

@@ -13,7 +13,7 @@ export default function ForgotPasswordScreen() {
     setLoading(true);
 
     try {
-      const res = await fetch('https://sos.macroit.org/api/forgot-password', {
+      const res = await fetch(`${process.env.API_URL}/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -23,7 +23,7 @@ export default function ForgotPasswordScreen() {
 
       if (res.ok) {
         toast.success(data.message || 'Password reset link sent!');
-        navigation.goBack(); 
+        navigation.goBack();
       } else {
         toast.error(data.message || 'Failed to send link');
       }

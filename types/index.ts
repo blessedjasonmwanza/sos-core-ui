@@ -6,8 +6,11 @@ export interface StaffRecord {
   fullName: string;
   email: string;
   address: string;
-  password: string; 
+  password: string;
   hpczNumber: string;
+  nrcNumber: string;
+  nrc: string;
+  selfie: string;
   nrcUri?: string;
   selfieUri?: string;
   signatureUri?: string;
