@@ -37,7 +37,7 @@ export async function generateOtp(phone: string) {
   try {
     const formData = new FormData();
     formData.append('phone_number', phone);
-
+    console.log(`Destination SMS: ${process.env.API_URL}/signup`)
     const response = await fetch(`${process.env.API_URL}/signup`, {
       method: 'POST',
       body: formData,
@@ -46,14 +46,12 @@ export async function generateOtp(phone: string) {
 
     const data = await response.json();
 
-
     return {
       status: response.status,
       ok: response.ok,
       data,
     };
   } catch (error: any) {
-
     return {
       success: false,
       message: error.message || 'Failed to send OTP',

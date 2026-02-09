@@ -43,7 +43,7 @@ export default function App() {
     async function prepareApp() {
       try {
         // 1. Configure API
-        api.setBaseUrl(API_BASE_URL);
+        api.setBaseUrl(process.env.API_URL || 'http://localhost:8000/api');
         await api.loadTokenFromStorage();
 
         // 2. Initialize Pusher for staff if credentials exist (works even without login)
