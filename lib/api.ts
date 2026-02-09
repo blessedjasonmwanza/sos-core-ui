@@ -201,6 +201,15 @@ class ApiClient {
     return this.request<any[]>('GET', '/staff/pending', { auth: true });
   }
 
+  async getActiveStaffs(token?: string) {
+    const options: any = { auth: true };
+    if (token) {
+      options.headers = { Authorization: `Bearer ${token}` };
+      options.auth = false;
+    }
+    return this.request<{ staffs: any[] }>('GET', '/active-staffs', options);
+  }
+
   async approveStaff(staffId: string) {
     return this.request('POST', `/staff/${encodeURIComponent(staffId)}/approve`, { auth: true });
   }
@@ -208,6 +217,21 @@ class ApiClient {
   // --- SOS ---
   async createSos(payload: SosPayload) {
     return this.request('POST', '/sos', { jsonBody: payload, auth: false });
+  }
+
+  async sendEmergencyHelp(payload: any, token?: string) {
+    // If a token is provided explicitly, use it in headers and disable auto-auth
+    // Otherwise rely on the internal token (auth: true)
+    const options: any = { jsonBody: payload };
+
+    if (token) {
+      options.headers = { Authorization: `Bearer ${token}` };
+      options.auth = false;
+    } else {
+      options.auth = true;
+    }
+
+    return this.request('POST', '/emergency-help', options);
   }
 
   async getSosList() {

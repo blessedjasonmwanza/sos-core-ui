@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert, Linking } from 'react-native';
 import * as Location from 'expo-location';
 import MapView, { Marker, Callout } from 'react-native-maps';
-import * as DB from '../lib/db';
+import { api } from '../lib/api';
 import { toast } from 'sonner-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -135,7 +135,8 @@ export default function UserMapScreen() {
       const { latitude: userLat, longitude: userLon } = userLocation.coords;
 
       // 3. Fetch real staff from backend
-      const staffList = await DB.listActiveStaffs(token);
+      const response = await api.getActiveStaffs(token);
+      const staffList = response.staffs || [];
 
       // Filter out staff without location and convert to numbers
       const staffWithLocation = staffList
@@ -214,31 +215,21 @@ export default function UserMapScreen() {
       };
 
       // Call Laravel backend API
-      const response = await fetch(`${process.env.API_URL}/emergency-help`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(helpData),
-      });
+      await api.sendEmergencyHelp(helpData, token);
 
-      if (response.ok) {
-        toast.success('Help is on the way! Emergency services have been notified.');
-        Alert.alert(
-          'Help Request Sent!',
-          'Your emergency request has been sent. Help is on the way!\n\nNearest practitioner members have been notified of your location.',
-          [{ text: 'OK', style: 'default' }]
-        );
-      } else {
-        throw new Error('Failed to send help request');
-      }
+      toast.success('Help is on the way! Emergency services have been notified.');
+      Alert.alert(
+        'Help Request Sent!',
+        'Your emergency request has been sent. Help is on the way!\n\nNearest practitioner members have been notified of your location.',
+        [{ text: 'OK', style: 'default' }]
+      );
     } catch (error: any) {
       console.error('Error sending help request:', error);
-      toast.error('Failed to send help request. Please try again.');
+      const errorMessage = error.message || 'Failed to send emergency request. Please check your connection and try again.';
+      toast.error(errorMessage);
       Alert.alert(
         'Error',
-        'Failed to send emergency request. Please check your connection and try again.',
+        errorMessage,
         [{ text: 'OK', style: 'cancel' }]
       );
     } finally {

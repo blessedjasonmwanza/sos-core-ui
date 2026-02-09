@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import * as Location from 'expo-location';
+import { api } from '../lib/api';
 
 interface SafetyCheckModalProps {
   visible: boolean;
@@ -114,29 +115,19 @@ export default function SafetyCheckModal({
         timestamp: new Date().toISOString(),
       };
 
-      const response = await fetch(`${process.env.API_URL}/emergency-help`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(helpData),
-      });
+      await api.sendEmergencyHelp(helpData, token);
 
-      if (response.ok) {
-        Alert.alert(
-          'Emergency Help Sent',
-          'Your emergency request has been automatically sent. Help is on the way!',
-          [{ text: 'OK' }]
-        );
-      } else {
-        throw new Error('Failed to send help request');
-      }
+      Alert.alert(
+        'Emergency Help Sent',
+        'Your emergency request has been automatically sent. Help is on the way!',
+        [{ text: 'OK' }]
+      );
     } catch (error: any) {
       console.error('Error sending emergency help:', error);
+      const errorMessage = error.message || 'Failed to send emergency request. Please try the emergency button manually.';
       Alert.alert(
         'Error',
-        'Failed to send emergency request. Please try the emergency button manually.',
+        errorMessage,
         [{ text: 'OK' }]
       );
     }
