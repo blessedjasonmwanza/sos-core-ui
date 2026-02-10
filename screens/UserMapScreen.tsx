@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert, Linking } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import { api } from '../lib/api';
@@ -7,6 +8,7 @@ import { toast } from 'sonner-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SafetyCheckModal from '../components/SafetyCheckModal';
+import { LogOut } from 'lucide-react-native';
 
 interface TrackingPreferences {
   trackingEnabled: boolean;
@@ -266,10 +268,33 @@ export default function UserMapScreen() {
     </View>
   );
 
+  // Handle logout
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            await AsyncStorage.removeItem('userToken'); // Clear token if any
+            // Navigate back to Landing or Login
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Welcome' }],
+            });
+          }
+        }
+      ]
+    );
+  };
+
   const { latitude, longitude } = location.coords;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <MapView
         style={styles.map}
         initialRegion={{
@@ -301,7 +326,15 @@ export default function UserMapScreen() {
         ))}
       </MapView>
 
-      {/* TRACK ME Button - always available when tracking is not enabled */}
+      {/* LOGOUT Button - Top Left */}
+      <Pressable
+        style={styles.logoutButton}
+        onPress={handleLogout}
+      >
+        <LogOut size={20} color="#EF4444" />
+      </Pressable>
+
+      {/* TRACK ME Button - Below Logout */}
       {(!trackingPreferences || !trackingPreferences.trackingEnabled) && (
         <Pressable
           style={styles.trackMeButton}
@@ -336,12 +369,15 @@ export default function UserMapScreen() {
         phone={phone}
         token={token}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: {
+    flex: 1,
+    backgroundColor: '#EF4444', // Red background for safe area
+  },
   map: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 16, fontSize: 16 },
@@ -379,10 +415,28 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  // Track ME Button - Circular, Top Left
+  // Logout Button - Top Left
+  logoutButton: {
+    position: 'absolute',
+    top: 20, // Adjusted for SafeAreaView
+    left: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    zIndex: 10,
+  },
+  // Track ME Button - Below Logout
   trackMeButton: {
     position: 'absolute',
-    top: 50,
+    top: 110, // Moved down to accommodate Logout button
     left: 20,
     minWidth: 80,
     paddingVertical: 8,
