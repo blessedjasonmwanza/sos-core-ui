@@ -6,6 +6,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useNavigation } from '@react-navigation/native';
 import * as DB from '../lib/db';
 import * as FileSystem from 'expo-file-system';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ChevronLeft } from 'lucide-react-native';
 
 export default function StaffRegisterScreen() {
   const [phone, setPhone] = useState('');
@@ -34,99 +36,139 @@ export default function StaffRegisterScreen() {
     setter(uri);
   }
 
-  
+  async function handleSubmit() {
+    if (!phone || !fullName || !email || !address || !password || !hpczNumber || !nrcNumber)
+      return toast.error('Please fill all required fields');
+    if (password !== confirmPassword) return toast.error('Passwords do not match');
+    if (!nrcUri || !selfieUri) return toast.error('Please upload NRC and selfie');
 
-async function handleSubmit() {
-  if (!phone || !fullName || !email || !address || !password || !hpczNumber || !nrcNumber)
-    return toast.error('Please fill all required fields');
-  if (password !== confirmPassword) return toast.error('Passwords do not match');
-  if (!nrcUri || !selfieUri) return toast.error('Please upload NRC and selfie');
+    setLoading(true);
+    try {
+      // ✅ Convert images to base64
+      const nrcBase64 = await FileSystem.readAsStringAsync(nrcUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      const selfieBase64 = await FileSystem.readAsStringAsync(selfieUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
 
-  setLoading(true);
-  try {
-    // ✅ Convert images to base64
-    const nrcBase64 = await FileSystem.readAsStringAsync(nrcUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-    const selfieBase64 = await FileSystem.readAsStringAsync(selfieUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+      // ✅ Add proper MIME prefix for Laravel
+      const nrcBase64String = `data:image/jpeg;base64,${nrcBase64}`;
+      const selfieBase64String = `data:image/jpeg;base64,${selfieBase64}`;
 
-    // ✅ Add proper MIME prefix for Laravel
-    const nrcBase64String = `data:image/jpeg;base64,${nrcBase64}`;
-    const selfieBase64String = `data:image/jpeg;base64,${selfieBase64}`;
+      const ok = await DB.createStaff({
+        phone,
+        fullName,
+        email,
+        address,
+        password,
+        hpczNumber,
+        nrcNumber,
+        nrc: nrcBase64String,
+        selfie: selfieBase64String,
+      });
 
-    const ok = await DB.createStaff({
-      phone,
-      fullName,
-      email,
-      address,
-      password,
-      hpczNumber,
-      nrcNumber,
-      nrc: nrcBase64String,
-      selfie: selfieBase64String,
-    });
+      console.log('Staff Registration Response:', ok);
 
-    console.log('Staff Registration Response:', ok);
+      if (!ok || ok.status !== 201) {
+        const errorMsg = ok?.data?.message || 'Failed to register staff';
+        if (ok?.data?.field) {
+          toast.error(errorMsg); // Show specific error from backend
+        } else {
+          console.log('Staff Creation Error:', errorMsg);
+          toast.error(errorMsg);
+        }
+        return;
+      }
 
-    if (!ok || ok.status !== 201) {
-      const errorMsg = ok?.data?.message || 'Failed to register staff';
-      console.log('Staff Creation Error:', errorMsg);
-      toast.error(errorMsg);
-      return;
+      if (ok.status === 201) {
+        console.log('Full response data:', ok.data);
+
+        const token = ok.data?.data?.access_token;
+        setToken(token);
+        console.log('Phone Number after creating staff:', phone);
+        toast.success('Registration submitted');
+        navigation.navigate('StaffTerms', { token, phone });
+      }
+    } catch (err: any) {
+      console.error('Error submitting staff data:', err);
+      toast.error(err.message || 'Failed to submit');
+    } finally {
+      setLoading(false);
     }
-
-    if (ok.status === 201) {
-      console.log('Full response data:', ok.data);
-
-      const token = ok.data?.data?.access_token;
-      setToken(token);
-      console.log('Phone Number after creating staff:', phone);
-      toast.success('Registration submitted');
-      navigation.navigate('StaffTerms', { token, phone });
-    }
-  } catch (err: any) {
-    console.error('Error submitting staff data:', err);
-    toast.error(err.message || 'Failed to submit');
-  } finally {
-    setLoading(false);
   }
-}
 
-return (
-  <ScrollView contentContainerStyle={styles.container}>
-    <Text style={styles.title}>Practitioner's Registration</Text>
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      {/* Fixed Header */}
+      <View style={styles.header}>
+        <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
+          <ChevronLeft color="#1E293B" size={28} />
+          <Text style={styles.backText}>Back</Text>
+        </Pressable>
+        <Text style={styles.title}>Practitioner Registration</Text>
+      </View>
 
-    <TextInput style={styles.input} placeholder="Phone e.g. +26097..." value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholderTextColor="#94A3B8" autoCapitalize="none" autoCorrect={false}/>
-    <TextInput style={styles.input} placeholder="Full names" value={fullName} onChangeText={setFullName} placeholderTextColor="#94A3B8" autoCapitalize="none" autoCorrect={false}/>
-    <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" placeholderTextColor="#94A3B8" autoCapitalize="none" autoCorrect={false}/>
-    <TextInput style={styles.input} placeholder="Address" value={address} onChangeText={setAddress} placeholderTextColor="#94A3B8" autoCapitalize="none" autoCorrect={false}/>
-    <TextInput style={styles.input} placeholder="HPCZ Number" value={hpczNumber} onChangeText={setHpczNumber} placeholderTextColor="#94A3B8" autoCapitalize="none" autoCorrect={false}/>
-    <TextInput style={styles.input} placeholder="NRC or Passport Number" value={nrcNumber} onChangeText={setNrcNumber} placeholderTextColor="#94A3B8" autoCapitalize="none" autoCorrect={false}/>
-    <TextInput style={styles.input} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry placeholderTextColor="#94A3B8" autoCapitalize="none" autoCorrect={false}/>
-    <TextInput style={styles.input} placeholder="Confirm Password" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry placeholderTextColor="#94A3B8" autoCapitalize="none" autoCorrect={false}/>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <TextInput style={styles.input} placeholder="Phone e.g. +26097..." value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholderTextColor="#94A3B8" autoCapitalize="none" autoCorrect={false} />
+        <TextInput style={styles.input} placeholder="Full names" value={fullName} onChangeText={setFullName} placeholderTextColor="#94A3B8" autoCapitalize="none" autoCorrect={false} />
+        <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" placeholderTextColor="#94A3B8" autoCapitalize="none" autoCorrect={false} />
+        <TextInput style={styles.input} placeholder="Address" value={address} onChangeText={setAddress} placeholderTextColor="#94A3B8" autoCapitalize="none" autoCorrect={false} />
+        <TextInput style={styles.input} placeholder="HPCZ Number" value={hpczNumber} onChangeText={setHpczNumber} placeholderTextColor="#94A3B8" autoCapitalize="none" autoCorrect={false} />
+        <TextInput style={styles.input} placeholder="NRC or Passport Number" value={nrcNumber} onChangeText={setNrcNumber} placeholderTextColor="#94A3B8" autoCapitalize="none" autoCorrect={false} />
+        <TextInput style={styles.input} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry placeholderTextColor="#94A3B8" autoCapitalize="none" autoCorrect={false} />
+        <TextInput style={styles.input} placeholder="Confirm Password" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry placeholderTextColor="#94A3B8" autoCapitalize="none" autoCorrect={false} />
 
-    <View style={styles.uploadRow}>
-      <Pressable style={styles.uploadBox} onPress={() => pickImage(setNrcUri)}>
-        {nrcUri ? <Image source={{ uri: nrcUri }} style={styles.preview} /> : <Text>Upload National ID or Passport Copy</Text>}
-      </Pressable>
+        <View style={styles.uploadRow}>
+          <Pressable style={styles.uploadBox} onPress={() => pickImage(setNrcUri)}>
+            {nrcUri ? <Image source={{ uri: nrcUri }} style={styles.preview} /> : <Text>Upload National ID or Passport Copy</Text>}
+          </Pressable>
 
-      <Pressable style={styles.uploadBox} onPress={() => pickImage(setSelfieUri)}>
-        {selfieUri ? <Image source={{ uri: selfieUri }} style={styles.preview} /> : <Text>Upload Portrait Picture</Text>}
-      </Pressable>
-    </View>
+          <Pressable style={styles.uploadBox} onPress={() => pickImage(setSelfieUri)}>
+            {selfieUri ? <Image source={{ uri: selfieUri }} style={styles.preview} /> : <Text>Upload Portrait Picture</Text>}
+          </Pressable>
+        </View>
 
-    <Pressable style={[styles.button, loading && { opacity: 0.6 }]} onPress={handleSubmit} disabled={loading}>
-      <Text style={styles.buttonText}>{loading ? 'Submitting…' : 'Submit for Approval'}</Text>
-    </Pressable>
-  </ScrollView>
-);
+        <Pressable style={[styles.button, loading && { opacity: 0.6 }]} onPress={handleSubmit} disabled={loading}>
+          <Text style={styles.buttonText}>{loading ? 'Submitting…' : 'Submit for Approval'}</Text>
+        </Pressable>
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, paddingBottom: 60 },
-  title: { fontSize: 22, fontWeight: '800', marginBottom: 12 },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  backText: {
+    fontSize: 16,
+    color: '#1E293B',
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
   input: {
     borderWidth: 1,
     borderColor: '#CBD5E1',
