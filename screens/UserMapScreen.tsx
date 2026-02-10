@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   // Logout Button - Top Left
   logoutButton: {
     position: 'absolute',
-    top: 20, // Adjusted for SafeAreaView
+    top: 38, // Increased from 20 to avoid touching safe area
     left: 20,
     width: 40,
     height: 40,
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
   // Track ME Button - Below Logout
   trackMeButton: {
     position: 'absolute',
-    top: 110, // Moved down to accommodate Logout button
+    top: 100, // Adjusted to maintain spacing relative to logout button
     left: 20,
     minWidth: 80,
     paddingVertical: 8,
