@@ -1,7 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
+// Safe imports for Expo modules
 const LinearGradient = (() => {
   try {
     return require('expo-linear-gradient').LinearGradient;
@@ -10,6 +13,7 @@ const LinearGradient = (() => {
   }
 })();
 
+// Safe imports for Lucide Icons
 let LucideIcons: any = null;
 try {
   LucideIcons = require('lucide-react-native');
@@ -17,157 +21,261 @@ try {
   LucideIcons = null;
 }
 
+const { width } = Dimensions.get('window');
+
 export default function WelcomeScreen() {
   const navigation = useNavigation<any>();
   const Gradient = LinearGradient as any;
   const Icons = LucideIcons as any;
 
-  const UserIcon =
-    Icons && (typeof Icons.User === 'function' ? Icons.User : Icons.User ?? null);
-  // Try different First Aid icon names from lucide-react-native
-  const FirstAidIcon =
-    Icons && (
-      (typeof Icons.HeartPulse === 'function' ? Icons.HeartPulse : null) ||
-      (typeof Icons.Stethoscope === 'function' ? Icons.Stethoscope : null) ||
-      (typeof Icons.Cross === 'function' ? Icons.Cross : null) ||
-      (typeof Icons.FirstAid === 'function' ? Icons.FirstAid : null)
-    );
+  // Icons
+  const SirenIcon = Icons?.Siren || Icons?.AlertTriangle || null;
+  const UserIcon = Icons?.User || Icons?.Phone || null;
+  const StethoscopeIcon = Icons?.Stethoscope || Icons?.Activity || null;
+  const ChevronRight = Icons?.ChevronRight || null;
 
   const Content = (
-    <>
-      {/* Header */}
-      <View style={{ alignItems: 'center', marginVertical: 20 }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', color: 'white', textAlign: 'center' }}>
-          Emergency SOS
-        </Text>
-        <Text style={{ fontSize: 16, color: 'white', marginTop: 4, textAlign: 'center' }}>
-          Fast help when it matters most
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar style="light" />
+
+      {/* Hero Section */}
+      <View style={styles.heroContainer}>
+        <View style={styles.iconCircle}>
+          {SirenIcon ? (
+            <SirenIcon size={48} color="#EF4444" />
+          ) : (
+            <Text style={{ fontSize: 40 }}>🚨</Text>
+          )}
+        </View>
+        <Text style={styles.heroTitle}>Emergency SOS</Text>
+        <Text style={styles.heroSubtitle}>
+          Fast, reliable help when every second counts.
         </Text>
       </View>
 
-      {/* Cards Section */}
-      <View style={styles.cards}>
-        {/* User Card */}
-        <Pressable style={styles.card} onPress={() => navigation.navigate('UserPhone')}>
-          <View style={styles.iconContainer}>
-            <View style={styles.iconWrap}>
-              {UserIcon ? <UserIcon color="#0B1220" width={28} height={28} /> : <Text>U</Text>}
-            </View>
-          </View>
-          <View style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Sign in as a User</Text>
-          </View>
+      {/* Action Cards Container */}
+      <View style={styles.actionsContainer}>
 
-          <Text style={styles.cardSub}>
-            Quick phone OTP. Call for help from your location.
-          </Text>
-        </Pressable>
-
-        {/* Combined Staff Card */}
+        {/* USER LOGIN CARD */}
         <View style={styles.card}>
-          <View style={styles.iconContainer}>
-            <View style={[styles.iconWrap, { backgroundColor: '#FFE8D6' }]}>
-              {FirstAidIcon ? (
-                <FirstAidIcon color="#0B1220" width={28} height={28} />
-              ) : (
-                <Text style={styles.iconFallback}>🏥</Text>
-              )}
+          <View style={styles.cardHeader}>
+            <View style={[styles.cardIconBox, { backgroundColor: '#EFF6FF' }]}>
+              {UserIcon ? <UserIcon size={24} color="#2563EB" /> : <Text>👤</Text>}
+            </View>
+            <View style={styles.cardHeaderText}>
+              <Text style={styles.cardTitle}>For Users</Text>
+              <Text style={styles.cardDescription}>Request immediate assistance</Text>
             </View>
           </View>
 
-          <Text style={styles.cardTitle}>Medical Practitioner Access</Text>
-          <Text style={styles.cardSub}>
-            Submit credentials, sign terms, and get approved to assist victims.
-          </Text>
+          <Pressable
+            style={({ pressed }) => [
+              styles.primaryButton,
+              pressed && styles.buttonPressed
+            ]}
+            onPress={() => navigation.navigate('UserPhone')}
+          >
+            <Text style={styles.primaryButtonText}>Get Help Now</Text>
+            {ChevronRight && <ChevronRight size={20} color="white" />}
+          </Pressable>
+        </View>
 
-          <View style={styles.buttonGroup}>
+        {/* STAFF LOGIN CARD */}
+        <View style={[styles.card, styles.staffCard]}>
+          <View style={styles.cardHeader}>
+            <View style={[styles.cardIconBox, { backgroundColor: '#ECFDF5' }]}>
+              {StethoscopeIcon ? <StethoscopeIcon size={24} color="#059669" /> : <Text>🩺</Text>}
+            </View>
+            <View style={styles.cardHeaderText}>
+              <Text style={styles.cardTitle}>For Responders</Text>
+              <Text style={styles.cardDescription}>Medical & Emergency Staff</Text>
+            </View>
+          </View>
+
+          <View style={styles.buttonRow}>
             <Pressable
-              style={[styles.actionButton, { backgroundColor: '#0B1220' }]}
-              onPress={() => navigation.navigate('StaffRegister')}
+              style={[styles.outlineButton, { flex: 1, marginRight: 8 }]}
+              onPress={() => navigation.navigate('StaffLogin')}
             >
-              <Text style={styles.actionText}>Register as Practitioner</Text>
+              <Text style={styles.outlineButtonText}>Log In</Text>
             </Pressable>
 
             <Pressable
-              style={[styles.actionButton, { backgroundColor: '#E6E6E6' }]}
-              onPress={() => navigation.navigate('StaffLogin')}
+              style={[styles.secondaryButton, { flex: 1, marginLeft: 8 }]}
+              onPress={() => navigation.navigate('StaffRegister')}
             >
-              <Text style={[styles.actionText, { color: '#0B1220' }]}>
-                Already Registered? Login
-              </Text>
+              <Text style={styles.secondaryButtonText}>Register</Text>
             </Pressable>
           </View>
         </View>
+
       </View>
-    </>
+
+      {/* Footer / Version Info */}
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>Secure & Encrypted • v1.0.0</Text>
+      </View>
+    </SafeAreaView>
   );
 
   if (Gradient) {
     return (
-      <Gradient colors={['#0F172A', '#0B1220']} style={styles.container}>
+      <Gradient colors={['#0F172A', '#1E293B', '#0F172A']} style={styles.container}>
         {Content}
       </Gradient>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: '#0F172A', padding: 24 }]}>
+    <View style={[styles.container, { backgroundColor: '#0F172A' }]}>
       {Content}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24 },
-  cards: { marginTop: 24, gap: 16 },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 18,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 14,
+  container: {
+    flex: 1,
   },
-  iconContainer: {
+  safeArea: {
+    flex: 1,
+    paddingHorizontal: 24,
+    justifyContent: 'space-between',
+  },
+  heroContainer: {
     alignItems: 'center',
-    marginBottom: 8,
+    marginTop: 60,
+    marginBottom: 40,
   },
-  iconWrap: {
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)', // Red with opacity
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+  },
+  heroTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  heroSubtitle: {
+    fontSize: 16,
+    color: '#94A3B8',
+    textAlign: 'center',
+    marginTop: 10,
+    maxWidth: width * 0.8,
+    lineHeight: 24,
+  },
+  actionsContainer: {
+    gap: 20,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  staffCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)', // Slightly transparent or different shade if needed
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  cardIconBox: {
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#E6F0FF',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 16,
   },
-  iconFallback: {
-    fontSize: 28,
+  cardHeaderText: {
+    flex: 1,
   },
-  cardTitle: { fontSize: 18, fontWeight: '700', color: '#0B1220', textAlign: 'center', },
-  cardSub: { marginTop: 6, color: '#334155', marginBottom: 14, textAlign: 'center' },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: '#64748B',
+    marginTop: 2,
+  },
+
+  // Buttons
   primaryButton: {
-    backgroundColor: '#2563EB',
-    borderRadius: 999,
-    paddingVertical: 10,
+    backgroundColor: '#EF4444', // Red for emergency urgency
+    borderRadius: 12,
+    paddingVertical: 14,
     paddingHorizontal: 20,
-    alignSelf: 'center',
-    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
   },
   primaryButtonText: {
     color: '#FFFFFF',
-    fontWeight: '600',
     fontSize: 16,
+    fontWeight: '700',
+    marginRight: 8,
   },
-  buttonGroup: { gap: 10 },
-  actionButton: {
-    borderRadius: 8,
+  buttonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
+
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  outlineButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  actionText: {
-    color: '#fff',
+  outlineButtonText: {
+    color: '#0F172A',
     fontWeight: '600',
     fontSize: 15,
+  },
+  secondaryButton: {
+    backgroundColor: '#0F172A',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+
+  footer: {
+    alignItems: 'center',
+    paddingBottom: 20,
+    marginTop: 20,
+  },
+  footerText: {
+    color: '#475569',
+    fontSize: 12,
   },
 });
