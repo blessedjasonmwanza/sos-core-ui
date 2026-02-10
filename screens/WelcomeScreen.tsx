@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -34,87 +34,101 @@ export default function WelcomeScreen() {
   const StethoscopeIcon = Icons?.Stethoscope || Icons?.Activity || null;
   const ChevronRight = Icons?.ChevronRight || null;
 
+  const navigateTo = (screen: string) => {
+    console.log(`[WelcomeScreen] Navigating to ${screen}`);
+    try {
+      navigation.navigate(screen);
+    } catch (error) {
+      console.error('[WelcomeScreen] Navigation error:', error);
+    }
+  };
+
   const Content = (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="light" />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
 
-      {/* Hero Section */}
-      <View style={styles.heroContainer}>
-        <View style={styles.iconCircle}>
-          {SirenIcon ? (
-            <SirenIcon size={48} color="#EF4444" />
-          ) : (
-            <Text style={{ fontSize: 40 }}>🚨</Text>
-          )}
-        </View>
-        <Text style={styles.heroTitle}>Emergency SOS</Text>
-        <Text style={styles.heroSubtitle}>
-          Fast, reliable help when every second counts.
-        </Text>
-      </View>
-
-      {/* Action Cards Container */}
-      <View style={styles.actionsContainer}>
-
-        {/* USER LOGIN CARD */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <View style={[styles.cardIconBox, { backgroundColor: '#EFF6FF' }]}>
-              {UserIcon ? <UserIcon size={24} color="#2563EB" /> : <Text>👤</Text>}
-            </View>
-            <View style={styles.cardHeaderText}>
-              <Text style={styles.cardTitle}>For Users</Text>
-              <Text style={styles.cardDescription}>Request immediate assistance</Text>
-            </View>
+        {/* Hero Section */}
+        <View style={styles.heroContainer}>
+          <View style={styles.iconCircle}>
+            {SirenIcon ? (
+              <SirenIcon size={48} color="#EF4444" />
+            ) : (
+              <Text style={{ fontSize: 40 }}>🚨</Text>
+            )}
           </View>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.primaryButton,
-              pressed && styles.buttonPressed
-            ]}
-            onPress={() => navigation.navigate('UserPhone')}
-          >
-            <Text style={styles.primaryButtonText}>Get Help Now</Text>
-            {ChevronRight && <ChevronRight size={20} color="white" />}
-          </Pressable>
+          <Text style={styles.heroTitle}>Emergency SOS</Text>
+          <Text style={styles.heroSubtitle}>
+            Fast, reliable help when every second counts.
+          </Text>
         </View>
 
-        {/* STAFF LOGIN CARD */}
-        <View style={[styles.card, styles.staffCard]}>
-          <View style={styles.cardHeader}>
-            <View style={[styles.cardIconBox, { backgroundColor: '#ECFDF5' }]}>
-              {StethoscopeIcon ? <StethoscopeIcon size={24} color="#059669" /> : <Text>🩺</Text>}
-            </View>
-            <View style={styles.cardHeaderText}>
-              <Text style={styles.cardTitle}>For Responders</Text>
-              <Text style={styles.cardDescription}>Medical & Emergency Staff</Text>
-            </View>
-          </View>
+        {/* Action Cards Container */}
+        <View style={styles.actionsContainer}>
 
-          <View style={styles.buttonRow}>
-            <Pressable
-              style={[styles.outlineButton, { flex: 1, marginRight: 8 }]}
-              onPress={() => navigation.navigate('StaffLogin')}
+          {/* USER LOGIN CARD */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <View style={[styles.cardIconBox, { backgroundColor: '#EFF6FF' }]}>
+                {UserIcon ? <UserIcon size={24} color="#2563EB" /> : <Text>👤</Text>}
+              </View>
+              <View style={styles.cardHeaderText}>
+                <Text style={styles.cardTitle}>For Users</Text>
+                <Text style={styles.cardDescription}>Request immediate assistance</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.primaryButton}
+              activeOpacity={0.8}
+              onPress={() => navigateTo('UserPhone')}
             >
-              <Text style={styles.outlineButtonText}>Log In</Text>
-            </Pressable>
-
-            <Pressable
-              style={[styles.secondaryButton, { flex: 1, marginLeft: 8 }]}
-              onPress={() => navigation.navigate('StaffRegister')}
-            >
-              <Text style={styles.secondaryButtonText}>Register</Text>
-            </Pressable>
+              <Text style={styles.primaryButtonText}>Get Help Now</Text>
+              {ChevronRight && <ChevronRight size={20} color="white" />}
+            </TouchableOpacity>
           </View>
+
+          {/* STAFF LOGIN CARD */}
+          <View style={[styles.card, styles.staffCard]}>
+            <View style={styles.cardHeader}>
+              <View style={[styles.cardIconBox, { backgroundColor: '#ECFDF5' }]}>
+                {StethoscopeIcon ? <StethoscopeIcon size={24} color="#059669" /> : <Text>🩺</Text>}
+              </View>
+              <View style={styles.cardHeaderText}>
+                <Text style={styles.cardTitle}>For Responders</Text>
+                <Text style={styles.cardDescription}>Medical & Emergency Staff</Text>
+              </View>
+            </View>
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                style={[styles.outlineButton, { flex: 1, marginRight: 8 }]}
+                activeOpacity={0.7}
+                onPress={() => navigateTo('StaffLogin')}
+              >
+                <Text style={styles.outlineButtonText}>Log In</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.secondaryButton, { flex: 1, marginLeft: 8 }]}
+                activeOpacity={0.7}
+                onPress={() => navigateTo('StaffRegister')}
+              >
+                <Text style={styles.secondaryButtonText}>Register</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
         </View>
 
-      </View>
-
-      {/* Footer / Version Info */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Secure & Encrypted • v1.0.0</Text>
-      </View>
+        {/* Footer / Version Info */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Secure & Encrypted • v1.0.0</Text>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 
@@ -139,12 +153,17 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 24,
-    justifyContent: 'space-between',
+    paddingBottom: 40,
+    justifyContent: 'center',
+    minHeight: '100%',
   },
   heroContainer: {
     alignItems: 'center',
-    marginTop: 60,
+    marginTop: 20,
     marginBottom: 40,
   },
   iconCircle: {
@@ -187,7 +206,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   staffCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)', // Slightly transparent or different shade if needed
+    backgroundColor: 'rgba(255, 255, 255, 0.95)', // Slightly transparent
   },
   cardHeader: {
     flexDirection: 'row',
@@ -233,10 +252,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginRight: 8,
   },
-  buttonPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.98 }],
-  },
 
   buttonRow: {
     flexDirection: 'row',
@@ -271,8 +286,8 @@ const styles = StyleSheet.create({
 
   footer: {
     alignItems: 'center',
-    paddingBottom: 20,
-    marginTop: 20,
+    paddingTop: 40,
+    marginTop: 'auto',
   },
   footerText: {
     color: '#475569',
