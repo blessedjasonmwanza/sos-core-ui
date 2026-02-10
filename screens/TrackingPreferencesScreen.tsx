@@ -10,7 +10,7 @@ export default function TrackingPreferencesScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
   const { phone, token } = route.params || {};
-  
+
   const [trackingEnabled, setTrackingEnabled] = useState(false);
   const [selectedInterval, setSelectedInterval] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -55,7 +55,7 @@ export default function TrackingPreferencesScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Track Me</Text>
       <Text style={styles.description}>
-  When embarking on a journey practioners will keep an eye on you 
+        When embarking on a journey practioners will keep an eye on you
       </Text>
 
       <View style={styles.optionsContainer}>
@@ -69,10 +69,10 @@ export default function TrackingPreferencesScreen() {
         </Pressable>
 
         <Pressable
-          style={[styles.optionButton, !trackingEnabled && styles.optionButtonSelected]}
+          style={[styles.optionButton, !trackingEnabled && styles.optionButtonSelectedGray]}
           onPress={handleDisableTracking}
         >
-          <Text style={[styles.optionText, !trackingEnabled && styles.optionTextSelected]}>
+          <Text style={[styles.optionText, !trackingEnabled && styles.optionTextSelectedGray]}>
             No, SKIP TRACK ME
           </Text>
         </Pressable>
@@ -82,7 +82,7 @@ export default function TrackingPreferencesScreen() {
         <View style={styles.intervalContainer}>
           <Text style={styles.intervalLabel}>Check-in interval:</Text>
           <Text style={styles.intervalSubtext}>How many times should we check on you while on your journey?</Text>
-          
+
           <View style={styles.intervalButtons}>
             {CHECK_IN_INTERVALS.map((interval) => (
               <Pressable
@@ -151,17 +151,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
     alignItems: 'center',
   },
-  optionButtonSelected: {
-    borderColor: '#10B981',
-    backgroundColor: '#ECFDF5',
-  },
+  // Restored optionText
   optionText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#6B7280',
   },
   optionTextSelected: {
-    color: '#10B981',
+    color: '#FFFFFF', // White text
+    fontWeight: '700',
+  },
+  optionButtonSelected: {
+    borderColor: '#10B981',
+    backgroundColor: '#10B981', // Solid Green
+  },
+  optionButtonSelectedGray: {
+    borderColor: '#64748B', // Slate 500
+    backgroundColor: '#F1F5F9', // Slate 100
+  },
+  optionTextSelectedGray: {
+    color: '#334155', // Slate 700
   },
   intervalContainer: {
     marginBottom: 30,

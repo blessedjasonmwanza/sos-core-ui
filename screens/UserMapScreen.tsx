@@ -335,15 +335,20 @@ export default function UserMapScreen() {
       </Pressable>
 
       {/* TRACK ME Button - Below Logout */}
-      {(!trackingPreferences || !trackingPreferences.trackingEnabled) && (
+      <View style={styles.trackMeContainer} pointerEvents="box-none">
         <Pressable
-          style={styles.trackMeButton}
+          style={[
+            styles.trackMeButton,
+            trackingPreferences?.trackingEnabled ? { backgroundColor: '#10B981' } : { backgroundColor: '#64748B' }
+          ]}
           onPress={handleEnableTracking}
         >
           <Text style={styles.trackMeIcon}>📍</Text>
-          <Text style={styles.trackMeText}>TRACK ME</Text>
+          <Text style={styles.trackMeText}>
+            {trackingPreferences?.trackingEnabled ? 'TRACKING ON' : 'TRACK ME'}
+          </Text>
         </Pressable>
-      )}
+      </View>
 
       {/* Big Red Help Button */}
       <View style={styles.helpButtonContainer}>
@@ -433,11 +438,16 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     zIndex: 10,
   },
-  // Track ME Button - Below Logout
-  trackMeButton: {
+  // Track ME Button Container - Top Center
+  trackMeContainer: {
     position: 'absolute',
-    top: 100, // Adjusted to maintain spacing relative to logout button
-    left: 20,
+    top: 50,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  trackMeButton: {
     minWidth: 80,
     paddingVertical: 8,
     paddingHorizontal: 12,
