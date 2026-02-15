@@ -8,6 +8,7 @@ import * as DB from '../lib/db';
 import * as FileSystem from 'expo-file-system';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function StaffRegisterScreen() {
   const [phone, setPhone] = useState('');
@@ -85,6 +86,13 @@ export default function StaffRegisterScreen() {
         console.log('Full response data:', ok.data);
 
         const token = ok.data?.data?.access_token;
+        const user = ok.data?.data; // The whole data object contains id, staff_id, etc.
+
+        if (token && user) {
+          await AsyncStorage.setItem('staffToken', token);
+          await AsyncStorage.setItem('staffUser', JSON.stringify(user));
+        }
+
         setToken(token);
         console.log('Phone Number after creating staff:', phone);
         toast.success('Registration submitted');

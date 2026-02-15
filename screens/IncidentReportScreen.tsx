@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, ScrollView } from 'react-native';
 import { toast } from 'sonner-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute } from '@react-navigation/native';
 
 export default function IncidentReportScreen() {
@@ -88,75 +88,79 @@ export default function IncidentReportScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.formTitle}>Incident Report</Text>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+        <Text style={styles.formTitle}>Incident Report</Text>
 
-      <Text style={styles.label}>Case ID *</Text>
-      <TextInput
-        style={[styles.input, isPreFilled && styles.disabledInput]}
-        placeholder="Enter case ID"
-        value={caseId}
-        onChangeText={setCaseId}
-        keyboardType="numeric"
-        editable={!isPreFilled}
-      />
+        <Text style={styles.label}>Case ID *</Text>
+        <TextInput
+          style={[styles.input, isPreFilled && styles.disabledInput]}
+          placeholder="Enter case ID"
+          value={caseId}
+          onChangeText={setCaseId}
+          keyboardType="numeric"
+          editable={!isPreFilled}
+        />
 
-      <Text style={styles.label}>Severity *</Text>
-      <View style={styles.severityContainer}>
-        {['low', 'medium', 'high', 'critical'].map((level) => (
-          <Pressable
-            key={level}
-            style={[
-              styles.severityBtn,
-              severity === level && styles.severityBtnActive,
-            ]}
-            onPress={() => setSeverity(level)}
-          >
-            <Text style={[
-              styles.severityText,
-              severity === level && styles.severityTextActive,
-            ]}>
-              {level.charAt(0).toUpperCase() + level.slice(1)}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+        <Text style={styles.label}>Severity *</Text>
+        <View style={styles.severityContainer}>
+          {['low', 'medium', 'high', 'critical'].map((level) => (
+            <Pressable
+              key={level}
+              style={[
+                styles.severityBtn,
+                severity === level && styles.severityBtnActive,
+              ]}
+              onPress={() => setSeverity(level)}
+            >
+              <Text style={[
+                styles.severityText,
+                severity === level && styles.severityTextActive,
+              ]}>
+                {level.charAt(0).toUpperCase() + level.slice(1)}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
 
-      <Text style={styles.label}>Description *</Text>
-      <TextInput
-        style={[styles.input, styles.textArea]}
-        placeholder="Describe what happened..."
-        value={description}
-        onChangeText={setDescription}
-        multiline
-        numberOfLines={6}
-      />
+        <Text style={styles.label}>Description *</Text>
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          placeholder="Describe what happened..."
+          value={description}
+          onChangeText={setDescription}
+          multiline
+          numberOfLines={6}
+        />
 
-      <Text style={styles.label}>Outcome</Text>
-      <TextInput
-        style={[styles.input, styles.textArea]}
-        placeholder="Resolution or next steps..."
-        value={outcome}
-        onChangeText={setOutcome}
-        multiline
-        numberOfLines={4}
-      />
+        <Text style={styles.label}>Outcome</Text>
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          placeholder="Resolution or next steps..."
+          value={outcome}
+          onChangeText={setOutcome}
+          multiline
+          numberOfLines={4}
+        />
 
-      <Pressable
-        style={[styles.submitButton, loading && { opacity: 0.6 }]}
-        onPress={handleSubmit}
-        disabled={loading}
-      >
-        <Text style={styles.submitButtonText}>
-          {loading ? 'Submitting...' : 'Submit Report'}
-        </Text>
-      </Pressable>
-    </ScrollView>
+        <Pressable
+          style={[styles.submitButton, loading && { opacity: 0.6 }]}
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          <Text style={styles.submitButtonText}>
+            {loading ? 'Submitting...' : 'Submit Report'}
+          </Text>
+        </Pressable>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC', padding: 16 },
+  safeArea: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { flex: 1 },
+  contentContainer: { padding: 16, paddingBottom: 40 },
   formTitle: {
     fontSize: 22,
     fontWeight: '800',

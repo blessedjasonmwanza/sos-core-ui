@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import * as DB from '../lib/db';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { toast } from 'sonner-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SOSAlertsScreen() {
   const navigation = useNavigation<any>();
@@ -17,36 +18,36 @@ export default function SOSAlertsScreen() {
   }, [filter]);
 
   async function loadAlerts() {
-  // Load staff user data
-  const userData = await AsyncStorage.getItem('staffUser');
-  let staffId;
-  
-  if (userData) {
-    const parsedUser = JSON.parse(userData);
-    setStaffUser(parsedUser);
-    staffId = parsedUser.id;
-  }
+    // Load staff user data
+    const userData = await AsyncStorage.getItem('staffUser');
+    let staffId;
 
-  const staffToken = await AsyncStorage.getItem('staffToken');
-  if (!staffToken || !staffId) {
-    console.log('Missing token or staff ID');
-    return;
-  }
-  
-  console.log('Staff Token:', staffToken);
-  console.log('Staff ID:', staffId); 
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      setStaffUser(parsedUser);
+      staffId = parsedUser.id;
+    }
 
-  const list = await DB.listSOS(staffId);
-  let filtered = list;
-  
-  if (filter === 'active') {
-    filtered = list.filter((s: any) => s.status === 'active');
-  } else if (filter === 'completed') {
-    filtered = list.filter((s: any) => s.status === 'completed'); // FIXED: Only completed status
+    const staffToken = await AsyncStorage.getItem('staffToken');
+    if (!staffToken || !staffId) {
+      console.log('Missing token or staff ID');
+      return;
+    }
+
+    console.log('Staff Token:', staffToken);
+    console.log('Staff ID:', staffId);
+
+    const list = await DB.listSOS(staffId);
+    let filtered = list;
+
+    if (filter === 'active') {
+      filtered = list.filter((s: any) => s.status === 'active');
+    } else if (filter === 'completed') {
+      filtered = list.filter((s: any) => s.status === 'completed');
+    }
+
+    setAlerts(filtered);
   }
-  
-  setAlerts(filtered);
-}
 
   async function onRefresh() {
     setRefreshing(true);
@@ -54,13 +55,11 @@ export default function SOSAlertsScreen() {
     setRefreshing(false);
   }
 
-  
-
   function getTimeAgo(dateString: string) {
     const date = new Date(dateString);
     const now = new Date();
     const diff = Math.floor((now.getTime() - date.getTime()) / 1000 / 60);
-    
+
     if (diff < 1) return 'Just now';
     if (diff < 60) return `${diff}m ago`;
     if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
@@ -68,10 +67,10 @@ export default function SOSAlertsScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Filter Tabs */}
       <View style={styles.filterContainer}>
-        <Pressable 
+        <Pressable
           style={[styles.filterBtn, filter === 'all' && styles.filterBtnActive]}
           onPress={() => setFilter('all')}
         >
@@ -79,7 +78,7 @@ export default function SOSAlertsScreen() {
             All
           </Text>
         </Pressable>
-        <Pressable 
+        <Pressable
           style={[styles.filterBtn, filter === 'active' && styles.filterBtnActive]}
           onPress={() => setFilter('active')}
         >
@@ -87,7 +86,7 @@ export default function SOSAlertsScreen() {
             Active
           </Text>
         </Pressable>
-        <Pressable 
+        <Pressable
           style={[styles.filterBtn, filter === 'completed' && styles.filterBtnActive]}
           onPress={() => setFilter('completed')}
         >
@@ -104,7 +103,7 @@ export default function SOSAlertsScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         renderItem={({ item }) => (
-          <Pressable 
+          <Pressable
             style={styles.alertCard}
             onPress={() => navigation.navigate('SOSDetail', { sosId: item.id })}
           >
@@ -120,8 +119,6 @@ export default function SOSAlertsScreen() {
                 </View>
               )}
             </View>
-
-            
 
             <View style={styles.locationRow}>
               <Text style={styles.locationIcon}>📍</Text>
@@ -141,7 +138,6 @@ export default function SOSAlertsScreen() {
               </Text>
             )}
 
-
           </Pressable>
         )}
         ListEmptyComponent={
@@ -149,14 +145,14 @@ export default function SOSAlertsScreen() {
             <Text style={styles.emptyIcon}>📭</Text>
             <Text style={styles.emptyText}>No SOS alerts found</Text>
             <Text style={styles.emptySubtext}>
-              {filter === 'active' ? 'No active alerts at the moment' : 
-               filter === 'completed' ? 'No Completed alerts' : 
-               'Pull down to refresh'}
+              {filter === 'active' ? 'No active alerts at the moment' :
+                filter === 'completed' ? 'No Completed alerts' :
+                  'Pull down to refresh'}
             </Text>
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DB from '../lib/db';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function MyCasesScreen() {
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
@@ -16,7 +17,7 @@ export default function MyCasesScreen() {
     // Load staff user data
     const userData = await AsyncStorage.getItem('staffUser');
     let staffId;
-    
+
     if (userData) {
       const parsedUser = JSON.parse(userData);
       setStaffUser(parsedUser);
@@ -28,10 +29,10 @@ export default function MyCasesScreen() {
       console.log('Missing token or staff ID');
       return;
     }
-    
+
     console.log('Staff Token:', staffToken);
-    console.log('Staff ID:', staffId); 
-    
+    console.log('Staff ID:', staffId);
+
     const allCases = await DB.listSOS(staffId);
     const filtered = allCases.filter((c: any) => {
       if (activeTab === 'active') return c.status === 'active';
@@ -41,9 +42,9 @@ export default function MyCasesScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.tabContainer}>
-        <Pressable 
+        <Pressable
           style={[styles.tab, activeTab === 'active' && styles.activeTab]}
           onPress={() => setActiveTab('active')}
         >
@@ -51,7 +52,7 @@ export default function MyCasesScreen() {
             Active
           </Text>
         </Pressable>
-        <Pressable 
+        <Pressable
           style={[styles.tab, activeTab === 'completed' && styles.activeTab]}
           onPress={() => setActiveTab('completed')}
         >
@@ -82,7 +83,6 @@ export default function MyCasesScreen() {
             <Text style={styles.caseTime}>
               🕒 {new Date(item.createdAt).toLocaleString()}
             </Text>
-            
 
           </View>
         )}
@@ -90,7 +90,7 @@ export default function MyCasesScreen() {
           <Text style={styles.emptyText}>No {activeTab} cases</Text>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
