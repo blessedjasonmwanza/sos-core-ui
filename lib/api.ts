@@ -113,7 +113,7 @@ class ApiClient {
 
       if (!res.ok) {
         // Normalize error
-        const message = parsed?.message || parsed?.error || parsed || res.statusText;
+        const message = parsed?.message || parsed?.error || (typeof parsed === 'object' ? JSON.stringify(parsed) : parsed) || res.statusText;
         const err: any = new Error(message);
         err.status = res.status;
         err.data = parsed;
@@ -185,6 +185,7 @@ class ApiClient {
   }
 
   async submitStaffSignature(staffId: string, signatureDataUrl: string) {
+    console.log('Signature Data URL:', signatureDataUrl);
     return this.request('POST', `/staff/${encodeURIComponent(staffId)}/signature`, {
       jsonBody: { signature: signatureDataUrl },
       auth: true,

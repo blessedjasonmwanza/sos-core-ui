@@ -242,7 +242,7 @@ export default function UserMapScreen() {
   const confirmCallForHelp = () => {
     Alert.alert(
       'Emergency Help',
-      'Are you sure you want to call for emergency help? This will notify all nearby staff members with your location.',
+      'Are you sure you want to call for emergency help? This will notify all nearby heath practitioners with your location.',
       [
         { text: 'Cancel', style: 'cancel' },
         {

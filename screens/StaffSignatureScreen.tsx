@@ -25,14 +25,14 @@ export default function StaffSignatureScreen() {
     try {
       console.log('Phone Number before submitting signature:', phone);
       const result = await DB.submitStaffSignature({
-  
+
         token,
         phone,
-        signature, 
+        signature,
       });
 
       if (!result.ok) {
-        throw new Error(result.data || result.message || 'Failed to save signature');
+        throw new Error(result.data?.message || result.message || 'Failed to save signature');
       }
 
       toast.success('Signature saved — submitted for approval');
@@ -57,11 +57,11 @@ export default function StaffSignatureScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-               console.log('Phone Number on submitting signature:', phone);
+              console.log('Phone Number on submitting signature:', phone);
               const result = await DB.submitStaffSignature({
                 token,
                 phone,
-                signature: '', 
+                signature: '',
               });
 
               if (!result.ok) {

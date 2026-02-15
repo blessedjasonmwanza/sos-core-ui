@@ -17,7 +17,7 @@ export default function StaffLoginScreen() {
   async function handleLogin() {
     if (!email || !password) return toast.error('Enter email and password');
     setLoading(true);
-
+    console.log(`pinging: ${process.env.API_URL}/staff-login`);
     try {
       // 1. Login
       const res = await fetch(`${process.env.API_URL}/staff-login`, {
@@ -27,6 +27,7 @@ export default function StaffLoginScreen() {
       });
 
       const data = await res.json();
+      console.log(data);
       if (!res.ok) throw new Error(data.message || 'Login failed');
 
       // 2. Store auth

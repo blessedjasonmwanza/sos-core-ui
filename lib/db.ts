@@ -81,7 +81,8 @@ export async function verifyOtp(phone: string, code: string, token: string) {
     console.log('OTP verification response:', data);
 
     if (!response.ok) {
-      throw new Error(data.message || 'OTP verification failed');
+      const errorMsg = data.message || data.error || (typeof data === 'string' ? data : JSON.stringify(data)) || 'OTP verification failed';
+      throw new Error(errorMsg);
     }
 
     return data;
@@ -133,7 +134,7 @@ export async function createStaff(payload: {
   } catch (error: any) {
     return {
       success: false,
-      message: error.message || 'Failed to submit staff registration',
+      message: error.message || (typeof error === 'string' ? error : JSON.stringify(error)) || 'Failed to submit staff registration',
     };
   }
 }
@@ -150,7 +151,7 @@ export async function submitStaffSignature(payload: {
     const formData = new FormData();
     formData.append('phone', payload.phone);
     formData.append('signature', payload.signature);
-
+    console.log
     const response = await fetch(`${process.env.API_URL}/signature`, {
       method: 'POST',
       headers: {
