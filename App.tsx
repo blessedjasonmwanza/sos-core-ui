@@ -27,6 +27,7 @@ import StaffProfileScreen from './screens/StaffProfileScreen';
 import MyCasesScreen from './screens/MyCasesScreen';
 import IncidentReportScreen from './screens/IncidentReportScreen';
 import SOSAlertsScreen from './screens/SOSAlertsScreen';
+import SOSDetailScreen from './screens/SOSDetailScreen';
 import ResourcesScreen from './screens/ResourcesScreen';
 import { AuthProvider } from './hooks/useAuth';
 import { api } from './lib/api';
@@ -153,6 +154,7 @@ export default function App() {
               <Stack.Screen name="MyCases" component={MyCasesScreen} />
               <Stack.Screen name="IncidentReports" component={IncidentReportScreen} />
               <Stack.Screen name="SOSAlerts" component={SOSAlertsScreen} />
+              <Stack.Screen name="SOSDetail" component={SOSDetailScreen} />
               <Stack.Screen name="Resources" component={ResourcesScreen} />
 
 
