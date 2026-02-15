@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert, Linking, LogBox } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import MapView, { Marker, Callout } from 'react-native-maps';
@@ -14,6 +14,9 @@ interface TrackingPreferences {
   trackingEnabled: boolean;
   checkInIntervalMinutes: number | null;
 }
+
+// Suppress non-fatal Expo Go warning from react-native-maps AIRMap bridging with React 19
+LogBox.ignoreLogs(['TypeError: this.getNativeComponent is not a function']);
 
 export default function UserMapScreen() {
 
