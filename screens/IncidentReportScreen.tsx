@@ -3,8 +3,15 @@ import { View, Text, StyleSheet, TextInput, Pressable, ScrollView } from 'react-
 import { toast } from 'sonner-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { useRoute } from '@react-navigation/native';
+
 export default function IncidentReportScreen() {
-  const [caseId, setCaseId] = useState('');
+  const route = useRoute<any>();
+  const initialCaseId = route.params?.caseId?.toString() || '';
+
+  const [caseId, setCaseId] = useState(initialCaseId);
+  const isPreFilled = !!initialCaseId;
+
   const [description, setDescription] = useState('');
   const [severity, setSeverity] = useState('medium');
   const [outcome, setOutcome] = useState('');
@@ -54,7 +61,13 @@ export default function IncidentReportScreen() {
       if (!res.ok) throw new Error('Failed to submit report ' + res.status);
 
       toast.success('Report submitted successfully');
-      setCaseId('');
+      // Only clear if not pre-filled, or navigate back?
+      if (!isPreFilled) {
+        setCaseId('');
+      } else {
+        // If pre-filled, maybe go back?
+        // For now just keep it or maybe toast and delay back?
+      }
       setDescription('');
       setOutcome('');
     } catch (err: any) {
@@ -70,11 +83,12 @@ export default function IncidentReportScreen() {
 
       <Text style={styles.label}>Case ID *</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, isPreFilled && styles.disabledInput]}
         placeholder="Enter case ID"
         value={caseId}
         onChangeText={setCaseId}
         keyboardType="numeric"
+        editable={!isPreFilled}
       />
 
       <Text style={styles.label}>Severity *</Text>
@@ -153,6 +167,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 16,
     fontSize: 14,
+  },
+  disabledInput: {
+    backgroundColor: '#E2E8F0',
+    color: '#64748B',
   },
   textArea: {
     height: 120,
