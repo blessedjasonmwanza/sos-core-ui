@@ -56,10 +56,12 @@ Before you begin, ensure you have the following installed:
    
    Update `.env` with your actual keys (Ask the project lead for these if you don't have them):
    ```env
-   API_URL=https://sos.macroit.org/api
+   # For Emulator: http://10.0.2.2:8000/api
+   # For Physical Device: http://YOUR_PC_IP:8000/api (e.g., http://192.168.1.5:8000/api)
+   API_URL=http://192.168.1.100:8000/api
    EXPO_PUBLIC_GOOGLE_MAPS_KEY=your_google_maps_key
    ```
-   > **Note:** The `EXPO_PUBLIC_` prefix is required for variables to be available in the Expo app.
+   > **Note:** The `EXPO_PUBLIC_` prefix is required for variables to be available in the Expo app. For physical devices, `localhost` will not work; use your machine's local IP address.
 
 4. **Setup Backend (Convex):**
    This project uses [Convex](https://www.convex.dev/) for the backend. You need to link to your Convex project and generate the API client.
@@ -105,15 +107,42 @@ Before you begin, ensure you have the following installed:
 
 ---
 
-## 🏗 Builds (Android & iOS)
+## 🏗 Builds & Production
 
-For detailed instructions on building APKs/IPAs for production or testing, please refer to [BUILD_INSTRUCTIONS.md](./BUILD_INSTRUCTIONS.md).
+We use **EAS (Expo Application Services)** for building and deploying the app.
 
-Quick reference:
-- **Android Preview**: `eas build --platform android --profile preview`
-- **iOS Preview**: `eas build --platform ios --profile preview` (Requires Apple Developer Account)
+### 1. Install EAS CLI
+```bash
+npm install -g eas-cli
+eas login
+```
 
----
+### 2. Configure Build Profiles
+Ensure `eas.json` is configured. If not, run:
+```bash
+eas build:configure
+```
+
+### 3. Create a Production Build
+To build the `.apk` (Android) or `.ipa` (iOS) for app store submission:
+
+**Android:**
+```bash
+eas build --platform android --profile production
+```
+
+**iOS:**
+```bash
+eas build --platform ios --profile production
+```
+
+### 4. Updates (OTA)
+To push a quick update without rebuilding the binary:
+```bash
+eas update --branch production --message "Fixing login bug"
+```
+
+For more details, refer to the [Expo EAS Documentation](https://docs.expo.dev/build/introduction/).
 
 ## 📚 Resources
 
