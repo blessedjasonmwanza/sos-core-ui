@@ -58,7 +58,17 @@ export default function IncidentReportScreen() {
         }),
       });
 
-      if (!res.ok) throw new Error('Failed to submit report ' + res.status);
+      if (!res.ok) {
+        const errorData = await res.json();
+        let errorMessage = errorData.message || 'Failed to submit report ' + res.status;
+
+        if (errorData.errors) {
+          const details = Object.values(errorData.errors).flat().join('\n');
+          errorMessage += `\n${details}`;
+        }
+
+        throw new Error(errorMessage);
+      }
 
       toast.success('Report submitted successfully');
       // Only clear if not pre-filled, or navigate back?
