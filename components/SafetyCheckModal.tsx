@@ -7,8 +7,10 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
+  Animated,
 } from 'react-native';
 import * as Location from 'expo-location';
+import * as Haptics from 'expo-haptics';
 import { api } from '../lib/api';
 
 interface SafetyCheckModalProps {
@@ -20,7 +22,7 @@ interface SafetyCheckModalProps {
   token: string;
 }
 
-const RESPONSE_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+const RESPONSE_TIMEOUT_SECONDS = 120; // 2 minutes
 
 export default function SafetyCheckModal({
   visible,
@@ -30,70 +32,111 @@ export default function SafetyCheckModal({
   phone,
   token,
 }: SafetyCheckModalProps) {
-  const [countdown, setCountdown] = useState(120); // 2 minutes in seconds
+  const [countdown, setCountdown] = useState(RESPONSE_TIMEOUT_SECONDS);
   const [responding, setResponding] = useState(false);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const warningIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // ------------------------------------------------------------------
+  // Haptic helpers (no audio — siren is practitioner-only)
+  // ------------------------------------------------------------------
+
+  const startWarningHaptics = () => {
+    if (warningIntervalRef.current) clearInterval(warningIntervalRef.current);
+    // Haptic pulse every 2 seconds during the last 30 seconds
+    warningIntervalRef.current = setInterval(() => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }, 2000);
+  };
+
+  const stopWarningHaptics = () => {
+    if (warningIntervalRef.current) {
+      clearInterval(warningIntervalRef.current);
+      warningIntervalRef.current = null;
+    }
+  };
+
+  // ------------------------------------------------------------------
+  // Pulse animation for the countdown in the last 30 seconds
+  // ------------------------------------------------------------------
+  const startPulse = () => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.15, duration: 500, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+      ])
+    ).start();
+  };
+
+  const stopPulse = () => {
+    pulseAnim.stopAnimation();
+    pulseAnim.setValue(1);
+  };
+
+  // ------------------------------------------------------------------
+  // Lifecycle
+  // ------------------------------------------------------------------
 
   useEffect(() => {
     if (visible) {
-      // Reset countdown when modal opens
-      setCountdown(120);
+      // Reset state
+      setCountdown(RESPONSE_TIMEOUT_SECONDS);
       setResponding(false);
+      stopPulse();
 
-      // Start countdown
+      // Single haptic to alert the user the modal has appeared (no audio — siren is for practitioners only)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+      // Start countdown tick
       countdownIntervalRef.current = setInterval(() => {
         setCountdown((prev) => {
-          if (prev <= 1) {
-            if (countdownIntervalRef.current) {
-              clearInterval(countdownIntervalRef.current);
-            }
+          const next = prev - 1;
+
+          // Last 30 seconds: switch to warning haptic mode + pulse animation
+          if (next === 30) {
+            startWarningHaptics();
+            startPulse();
+          }
+
+          if (next <= 0) {
+            if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
             handleAutoTimeout();
             return 0;
           }
-          return prev - 1;
+          return next;
         });
       }, 1000);
-
-      // Set timeout for auto-response
-      timeoutRef.current = setTimeout(() => {
-        handleAutoTimeout();
-      }, RESPONSE_TIMEOUT_MS);
     }
 
+    // Cleanup when modal hides
     return () => {
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-      }
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+      stopWarningHaptics();
+      stopPulse();
     };
   }, [visible]);
 
-  const handleAutoTimeout = async () => {
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-    }
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+  // ------------------------------------------------------------------
+  // Action handlers
+  // ------------------------------------------------------------------
 
-    // Auto-select thumbs down and trigger emergency
+  const handleAutoTimeout = async () => {
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    stopWarningHaptics();
+    stopPulse();
+
+    // Final urgent haptic burst before sending emergency
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
     setResponding(true);
     await triggerEmergencyHelp();
     onThumbsDown();
-    // Close modal after a brief delay
+
     setTimeout(() => {
       onClose();
       setResponding(false);
     }, 1000);
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const triggerEmergencyHelp = async () => {
@@ -124,25 +167,18 @@ export default function SafetyCheckModal({
       );
     } catch (error: any) {
       console.error('Error sending emergency help:', error);
-      const errorMessage = error.message || 'Failed to send emergency request. Please try the emergency button manually.';
-      Alert.alert(
-        'Error',
-        errorMessage,
-        [{ text: 'OK' }]
-      );
+      const errorMessage =
+        error.message || 'Failed to send emergency request. Please use the emergency button manually.';
+      Alert.alert('Error', errorMessage, [{ text: 'OK' }]);
     }
   };
 
-  const handleThumbsUp = () => {
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-    }
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+  const handleThumbsUp = async () => {
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    stopWarningHaptics();
+    stopPulse();
     setResponding(true);
     onThumbsUp();
-    // Close modal after a brief delay
     setTimeout(() => {
       onClose();
       setResponding(false);
@@ -150,24 +186,25 @@ export default function SafetyCheckModal({
   };
 
   const handleThumbsDown = async () => {
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-    }
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    stopWarningHaptics();
+    stopPulse();
     setResponding(true);
-
-    // Trigger emergency help
     await triggerEmergencyHelp();
-
     onThumbsDown();
-    // Close modal after a brief delay
     setTimeout(() => {
       onClose();
       setResponding(false);
     }, 1000);
   };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const isWarningPhase = countdown <= 30 && countdown > 0;
 
   return (
     <Modal
@@ -177,16 +214,23 @@ export default function SafetyCheckModal({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
+        <View style={[styles.modalContainer, isWarningPhase && styles.modalContainerWarning]}>
           <Text style={styles.title}>Are you okay?</Text>
           <Text style={styles.subtitle}>
             Please confirm your safety by selecting an option below.
           </Text>
 
           {countdown > 0 && !responding && (
-            <Text style={styles.countdown}>
-              Auto-response in: {formatTime(countdown)}
-            </Text>
+            <Animated.Text
+              style={[
+                styles.countdown,
+                isWarningPhase && styles.countdownWarning,
+                isWarningPhase && { transform: [{ scale: pulseAnim }] },
+              ]}
+            >
+              {isWarningPhase ? '⚠️ ' : ''}
+              Auto-emergency in: {formatTime(countdown)}
+            </Animated.Text>
           )}
 
           {responding ? (
@@ -222,7 +266,7 @@ export default function SafetyCheckModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -238,6 +282,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 10,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  modalContainerWarning: {
+    borderColor: '#EF4444',
   },
   title: {
     fontSize: 28,
@@ -259,6 +308,11 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     marginBottom: 30,
     textAlign: 'center',
+  },
+  countdownWarning: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#DC2626',
   },
   buttonsContainer: {
     flexDirection: 'row',
@@ -301,4 +355,3 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
 });
-

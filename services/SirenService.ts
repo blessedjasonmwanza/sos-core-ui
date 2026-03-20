@@ -1,17 +1,21 @@
 import { Audio } from 'expo-av';
+import * as Haptics from 'expo-haptics';
 
 class SirenService {
   private sound: Audio.Sound | null = null;
   private isPlaying: boolean = false;
+  private hapticInterval: any = null;
 
   async playSiren() {
     try {
-      // Stop any existing sound
-      if (this.isPlaying && this.sound) {
+      // Stop any existing sound/haptics
+      if (this.isPlaying) {
         await this.stopSiren();
       }
 
-      // Request audio permissions
+      console.log('🔊 Preparing emergency siren...');
+
+      // Request audio permissions and configure audio mode
       await Audio.requestPermissionsAsync();
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
@@ -21,55 +25,65 @@ class SirenService {
         playThroughEarpieceAndroid: false,
       });
 
-      // Create a siren sound using a tone generator
-      // For now, we'll use a simple approach - you can replace this with an actual siren audio file
-      console.log('🔊 Playing siren sound...');
-      
-      // Generate a simple alert sound
-      // Note: For production, you should use an actual siren audio file
-      // You can add a siren.mp3 file to your assets folder and load it here
-      
-      // For now, let's use a system sound or create a beep pattern
-      // Since expo-av requires an actual audio file, let's create a beeping pattern
-      
-      // Alternative: Use react-native's Vibration API for haptic feedback
-      // and show a visual alert
-      
+      // Load and play the emergency alarm sound
+      const { sound } = await Audio.Sound.createAsync(
+        require('../assets/sounds/emergency-alarm.mp3'),
+        {
+          shouldPlay: true,
+          isLooping: true,
+          volume: 1.0
+        }
+      );
+
+      this.sound = sound;
       this.isPlaying = true;
-      
-      // TODO: Load an actual siren audio file from assets
-      // const { sound } = await Audio.Sound.createAsync(
-      //   require('../assets/siren.mp3'),
-      //   { shouldPlay: true, isLooping: true }
-      // );
-      // this.sound = sound;
-      
-      // For now, we'll use vibration and console log
-      // You can add react-native's Vibration module for haptic feedback
-      console.log('🚨 SIREN ALERT: Emergency detected!');
-      
-      // If you have react-native-vibration installed:
-      // import Vibration from 'react-native';
-      // Vibration.vibrate([1000, 500, 1000, 500, 1000], true); // Vibrate pattern
-      
+
+      // Start haptic feedback loop
+      this.startHaptics();
+
+      console.log('🚨 SIREN ALERT: Sound and haptics active!');
+
     } catch (error: any) {
       console.error('❌ Error playing siren:', error);
       this.isPlaying = false;
     }
   }
 
+  private startHaptics() {
+    // Vibrate immediately
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+    // Repeat vibration pattern while siren is playing
+    this.hapticInterval = setInterval(() => {
+      if (this.isPlaying) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      } else {
+        this.stopHaptics();
+      }
+    }, 1500);
+  }
+
+  private stopHaptics() {
+    if (this.hapticInterval) {
+      clearInterval(this.hapticInterval);
+      this.hapticInterval = null;
+    }
+  }
+
   async stopSiren() {
     try {
+      this.isPlaying = false;
+      this.stopHaptics();
+
       if (this.sound) {
         await this.sound.stopAsync();
         await this.sound.unloadAsync();
         this.sound = null;
       }
-      this.isPlaying = false;
-      console.log('🔇 Siren stopped');
+
+      console.log('🔇 Siren and haptics stopped');
     } catch (error: any) {
       console.error('❌ Error stopping siren:', error);
-      this.isPlaying = false;
     }
   }
 

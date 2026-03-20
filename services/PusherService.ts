@@ -3,10 +3,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
 import { sirenService } from './SirenService';
 
+type EmergencyListener = (data: any) => void;
+
 class PusherService {
   private pusher: Pusher | null = null;
   private channel: any = null;
   private currentStaffId: string | null = null;
+  private emergencyListeners: Set<EmergencyListener> = new Set();
+  private lastEmergencyData: any = null;
 
   async initPusher(staffUserId: string) {
     try {
@@ -69,17 +73,29 @@ class PusherService {
 
   private handleEmergencyAlert(data: any) {
     console.log('🚨 Handling emergency alert:', data);
-    
+
+    // Store the latest emergency so screens can access it on mount
+    this.lastEmergencyData = data;
+
+    // Notify all registered screen listeners (Dashboard, SOSAlerts, etc.) immediately
+    this.emergencyListeners.forEach((listener) => {
+      try {
+        listener(data);
+      } catch (err) {
+        console.error('❌ Emergency listener error:', err);
+      }
+    });
+
     // Play siren sound
     sirenService.playSiren();
-    
+
     // Show alert to staff member (data matches Laravel broadcastWith format)
     const phone = data.victim_phone || data.phone || 'Unknown';
     const latitude = data.latitude || 0;
     const longitude = data.longitude || 0;
     const distance = data.distance_km ? `${data.distance_km} km away` : '';
     const message = data.message || 'Emergency help requested!';
-    
+
     Alert.alert(
       '🚨 EMERGENCY ALERT',
       `${message}\n\nPhone: ${phone}\nLocation: ${latitude?.toFixed(4)}, ${longitude?.toFixed(4)}\n${distance ? `Distance: ${distance}` : ''}`,
@@ -87,7 +103,6 @@ class PusherService {
         {
           text: 'View Details',
           onPress: () => {
-            // Navigate to emergency details screen if needed
             console.log('View emergency details for:', data);
           },
         },
@@ -101,6 +116,21 @@ class PusherService {
       ],
       { cancelable: false }
     );
+  }
+
+  /** Register a callback invoked whenever a new emergency alert is received. */
+  addEmergencyListener(listener: EmergencyListener) {
+    this.emergencyListeners.add(listener);
+  }
+
+  /** Unregister a previously registered callback. */
+  removeEmergencyListener(listener: EmergencyListener) {
+    this.emergencyListeners.delete(listener);
+  }
+
+  /** Returns the most recent emergency alert data (useful on screen mount). */
+  getLastEmergencyData() {
+    return this.lastEmergencyData;
   }
 
   disconnect() {

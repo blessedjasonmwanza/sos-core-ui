@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import * as DB from '../lib/db';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { toast } from 'sonner-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { pusherService } from '../services/PusherService';
 
 export default function SOSAlertsScreen() {
   const navigation = useNavigation<any>();
@@ -13,9 +14,54 @@ export default function SOSAlertsScreen() {
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [staffUser, setStaffUser] = useState<any>(null);
 
+  // Reload data every time the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadAlerts();
+    }, [filter])
+  );
+
   useEffect(() => {
-    loadAlerts();
+    // Subscribe to real-time emergency alerts so the list refreshes instantly
+    const onNewEmergency = (data: any) => {
+      console.log('📋 SOSAlerts: new emergency received — optimistic update');
+
+      // Optimistically append the new emergency to the top
+      const newSos = {
+        id: data.emergency_id || Math.random().toString(),
+        phone: data.victim_phone || data.phone || 'Unknown',
+        location: {
+          latitude: data.latitude,
+          longitude: data.longitude
+        },
+        status: 'active',
+        createdAt: data.timestamp || new Date().toISOString()
+      };
+
+      setAlerts(prev => {
+        // Prevent duplicates
+        if (prev.find(s => s.id === newSos.id)) return prev;
+
+        // Only add to 'active' or 'all' filter views
+        if (filter === 'completed') return prev;
+
+        return [newSos, ...prev];
+      });
+
+      toast.error('🚨 New emergency alert received!', { duration: 4000 });
+
+      // Delay fetch slightly to allow backend DB transactions to finish committing
+      setTimeout(() => {
+        loadAlerts();
+      }, 1500);
+    };
+    pusherService.addEmergencyListener(onNewEmergency);
+
+    return () => {
+      pusherService.removeEmergencyListener(onNewEmergency);
+    };
   }, [filter]);
+
 
   async function loadAlerts() {
     // Load staff user data

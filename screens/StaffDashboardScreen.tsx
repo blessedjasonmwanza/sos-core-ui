@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
 import * as DB from '../lib/db';
 import { useAuth } from '../hooks/useAuth';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { pusherService } from '../services/PusherService';
 
@@ -16,15 +16,55 @@ export default function StaffDashboardScreen() {
     completed: 0,
   });
   const [staffUser, setStaffUser] = useState<any>(null);
- 
- 
+
+  // Reload data every time the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
 
   useEffect(() => {
-    loadData();
     initializePusher();
 
-    // Note: Don't disconnect on unmount since we want Pusher to work in background
-    // Pusher will be cleaned up when app unmounts (handled in App.tsx)
+    // Subscribe to real-time emergency alerts so the dashboard updates instantly
+    const onNewEmergency = (data: any) => {
+      console.log('📊 Dashboard: new emergency received — optimistic update');
+
+      // Optimistically append the new emergency to the top
+      const newSos = {
+        id: data.emergency_id || Math.random().toString(),
+        phone: data.victim_phone || data.phone || 'Unknown',
+        location: {
+          latitude: data.latitude,
+          longitude: data.longitude
+        },
+        status: 'active',
+        createdAt: data.timestamp || new Date().toISOString()
+      };
+
+      setSoses(prev => {
+        // Prevent duplicates
+        if (prev.find(s => s.id === newSos.id)) return prev;
+        return [newSos, ...prev];
+      });
+
+      setStats(prev => ({
+        ...prev,
+        active: prev.active + 1
+      }));
+
+      // Delay fetch slightly to allow backend DB transactions to finish committing
+      setTimeout(() => {
+        loadData();
+      }, 1500);
+    };
+    pusherService.addEmergencyListener(onNewEmergency);
+
+    // Clean up listener when this screen unmounts
+    return () => {
+      pusherService.removeEmergencyListener(onNewEmergency);
+    };
   }, []);
 
   async function initializePusher() {
@@ -40,7 +80,7 @@ export default function StaffDashboardScreen() {
       if (userData) {
         const staff = JSON.parse(userData);
         const staffId = staff.id || staff.staff_id || staff.user_id;
-        
+
         if (staffId) {
           console.log('🔌 Initializing Pusher for staff ID:', staffId);
           await pusherService.initPusher(staffId.toString());
@@ -53,40 +93,41 @@ export default function StaffDashboardScreen() {
     }
   }
 
-  async function loadData() {
-  // Load staff user data
-  const userData = await AsyncStorage.getItem('staffUser');
-  let staffId;
-  
-  if (userData) {
-    const parsedUser = JSON.parse(userData);
-    setStaffUser(parsedUser);
-    staffId = parsedUser.id; // Use the local variable instead of state
-  }
 
-  const staffToken = await AsyncStorage.getItem('staffToken');
-  if (!staffToken || !staffId) {
-    console.log('Missing token or staff ID');
-    return;
+  async function loadData() {
+    // Load staff user data
+    const userData = await AsyncStorage.getItem('staffUser');
+    let staffId;
+
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      setStaffUser(parsedUser);
+      staffId = parsedUser.id; // Use the local variable instead of state
+    }
+
+    const staffToken = await AsyncStorage.getItem('staffToken');
+    if (!staffToken || !staffId) {
+      console.log('Missing token or staff ID');
+      return;
+    }
+
+    console.log('Staff Token:', staffToken);
+    console.log('Staff ID:', staffId); // Now this will log the actual ID
+
+    try {
+      const list = await DB.listSOS(staffId);
+      setSoses(list.filter((s: any) => s.status === 'active'));
+
+      // Calculate stats
+      setStats({
+        active: list.filter((s: any) => s.status === 'active').length,
+        inProgress: list.filter((s: any) => s.status === 'in-progress').length,
+        completed: list.filter((s: any) => s.status === 'completed').length,
+      });
+    } catch (error) {
+      console.error('Error loading SOS data:', error);
+    }
   }
-  
-  console.log('Staff Token:', staffToken);
-  console.log('Staff ID:', staffId); // Now this will log the actual ID
-  
-  try {
-    const list = await DB.listSOS(staffId);
-    setSoses(list.filter((s: any) => s.status === 'active'));
-    
-    // Calculate stats
-    setStats({
-      active: list.filter((s: any) => s.status === 'active').length,
-      inProgress: list.filter((s: any) => s.status === 'in-progress').length,
-      completed: list.filter((s: any) => s.status === 'completed').length,
-    });
-  } catch (error) {
-    console.error('Error loading SOS data:', error);
-  }
-}
   return (
     <ScrollView style={styles.container}>
       {/* Header with Profile */}
@@ -95,8 +136,8 @@ export default function StaffDashboardScreen() {
           <Text style={styles.welcomeText}>Welcome back,</Text>
           <Text style={styles.userName}>{staffUser?.name || 'Staff'}</Text>
         </View>
-        <Pressable 
-          onPress={() => navigation.navigate('StaffProfile')} 
+        <Pressable
+          onPress={() => navigation.navigate('StaffProfile')}
           style={styles.profileBtn}
         >
           <Text style={styles.profileInitial}>
@@ -121,7 +162,7 @@ export default function StaffDashboardScreen() {
       {/* Quick Actions */}
       <Text style={styles.sectionTitle}>Quick Actions</Text>
       <View style={styles.actionsGrid}>
-        <Pressable 
+        <Pressable
           style={styles.actionCard}
           onPress={() => navigation.navigate('SOSAlerts')}
         >
@@ -129,7 +170,7 @@ export default function StaffDashboardScreen() {
           <Text style={styles.actionText}>SOS Alerts</Text>
         </Pressable>
 
-        <Pressable 
+        <Pressable
           style={styles.actionCard}
           onPress={() => navigation.navigate('MyCases')}
         >
@@ -137,7 +178,7 @@ export default function StaffDashboardScreen() {
           <Text style={styles.actionText}>My Cases</Text>
         </Pressable>
 
-        <Pressable 
+        <Pressable
           style={styles.actionCard}
           onPress={() => navigation.navigate('IncidentReports')}
         >
@@ -145,7 +186,7 @@ export default function StaffDashboardScreen() {
           <Text style={styles.actionText}>Reports</Text>
         </Pressable>
 
-        <Pressable 
+        <Pressable
           style={styles.actionCard}
           onPress={() => navigation.navigate('Resources')}
         >
@@ -157,7 +198,7 @@ export default function StaffDashboardScreen() {
       {/* Recent Active SOS */}
       <Text style={styles.sectionTitle}>Recent Active Alerts</Text>
       {soses.slice(0, 3).map((item) => (
-        <Pressable 
+        <Pressable
           key={item.id}
           style={styles.sosCard}
           onPress={() => navigation.navigate('SOSDetail', { sosId: item.id })}
